@@ -6,6 +6,7 @@ public class Main {
     private static Connection connection;
     private static Statement stmt;
     private static PreparedStatement pstmt;
+    private static boolean close = true;
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner( System.in );
@@ -13,6 +14,7 @@ public class Main {
         try {
             connect();
             connection.setAutoCommit(false);
+            stmt.executeUpdate( "DELETE FROM products --" );
             stmt.executeUpdate( "INSERT INTO products ( prodid, title, cost) VALUES ('id товара', 'товар', 1)" );
             pstmt = connection.prepareStatement("INSERT INTO products ( prodid, title, cost)\n" +
                     "VALUES  (?,?,?)");
@@ -24,8 +26,12 @@ public class Main {
             }
             pstmt.executeBatch();
             connection.setAutoCommit( true );
-            String scan = scanner.nextLine();
-            consoleCommandParser( scan );
+
+            while(close){
+                System.out.println("Для выхода из приложения введите /1");
+                String scan = scanner.nextLine();
+                consoleCommandParser( scan );
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -44,7 +50,7 @@ public class Main {
         Class.forName("org.sqlite.JDBC");
         connection = DriverManager.getConnection("jdbc:sqlite:main.db");
         stmt = connection.createStatement();
-        stmt.executeUpdate( "CREATE TABLE products (\n" +
+        stmt.executeUpdate( "CREATE TABLE IF NOT EXISTS products (\n" +
                 "    id     INTEGER PRIMARY KEY,\n" +
                 "    prodid TEXT    UNIQUE,\n" +
                 "    title  TEXT,\n" +
@@ -64,6 +70,8 @@ public class Main {
                 costChanger(s);
         } else if (recognizer.compareTo( "т" )==0){
                 titlePrinter(s);
+        } else if(recognizer.compareTo( "1" )==0){
+            close = false;
         } else {
             System.out.println("Неверная команда!");
         }
@@ -71,11 +79,9 @@ public class Main {
 
     private static void titlePrinter(String s) {
         String prices = s.substring( 14 );
-        System.out.println(prices);
         int delete = prices.lastIndexOf( " " );
         int lowPrice = Integer.parseInt( prices.substring( 0, delete ) );
         int highPrice = Integer.parseInt( prices.substring( delete+1 ) );
-        System.out.println(lowPrice + " " + highPrice);
 
         try {
             PreparedStatement ps = connection.prepareStatement( "SELECT title FROM products WHERE cost <= ? and cost >= ?" );
@@ -88,7 +94,6 @@ public class Main {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Выборка товаров");
         }
     }
 
@@ -97,7 +102,6 @@ public class Main {
         int delete = title.lastIndexOf( " " );
         int newCost = Integer.parseInt( title.substring( delete+1 ) );
         title = title.substring( 0, delete );
-        System.out.println(title);
 
         try {
             PreparedStatement ps = connection.prepareStatement( "UPDATE products SET cost = ? WHERE title = ?" );
@@ -107,8 +111,6 @@ public class Main {
             System.out.println(result);
         } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Такого товара нет");
-            System.out.println("методсмены цены");
         }
     }
 
