@@ -14,6 +14,7 @@ public class Main {
         try {
             connect();
             connection.setAutoCommit(false);
+            stmt.executeUpdate( "DELETE FROM products --" );
             stmt.executeUpdate( "INSERT INTO products ( prodid, title, cost) VALUES ('id товара', 'товар', 1)" );
             pstmt = connection.prepareStatement("INSERT INTO products ( prodid, title, cost)\n" +
                     "VALUES  (?,?,?)");
@@ -49,7 +50,7 @@ public class Main {
         Class.forName("org.sqlite.JDBC");
         connection = DriverManager.getConnection("jdbc:sqlite:main.db");
         stmt = connection.createStatement();
-        stmt.executeUpdate( "CREATE TABLE products (\n" +
+        stmt.executeUpdate( "CREATE TABLE IF NOT EXISTS products (\n" +
                 "    id     INTEGER PRIMARY KEY,\n" +
                 "    prodid TEXT    UNIQUE,\n" +
                 "    title  TEXT,\n" +
